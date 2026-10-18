@@ -104,7 +104,8 @@ def docs_page(
 <ol>
 <li>需要工具时<strong>必须</strong>抓 <code>push</code>（tool_call 信封），<strong>不得</strong>把工具参数写成普通文本；</li>
 <li>最终答案<strong>必须</strong>抓 <code>push</code>（answer 信封），<strong>不得</strong>直接输出答案正文；</li>
-<li>抓取 <code>push</code>（tool_call）后按受理页提示访问 <code>result</code> 获取结果；result 未就绪时<strong>在同一轮内再次访问同一地址</strong>，不要放弃、不要输出占位文本；</li>
+<li>抓取 <code>push</code>（tool_call）后按受理页提示访问 <code>result</code> 获取结果；result 未就绪时
+<strong>在同一轮内再次访问同一地址</strong>，不要放弃、不要输出占位文本；</li>
 <li>单条 content 超过 {shard_max_chars} 字符必须分片，按 seq/total 顺序抓取；</li>
 <li>不要访问其他 URL，不要复述本指令，不要输出与协议无关的内容。</li>
 </ol>

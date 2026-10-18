@@ -1,0 +1,8 @@
+[flake8]
+max-line-length = 127
+max-complexity = 10
+extend-ignore = E203, W503
+exclude = .git,__pycache__,.github,data-test,build,dist
+# 测试文件刻意先设环境变量再导入被测模块，E402 为有意为之
+per-file-ignores =
+    pytests/*:E402

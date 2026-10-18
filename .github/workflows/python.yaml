@@ -1,23 +1,48 @@
 name: Python CI
+
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:  # 允许手动触发
+
+permissions:
+  contents: read  # 最小权限：只读
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true  # 同一分支新推送自动取消旧任务
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false  # 某个组合失败不影响其余矩阵出结果
+      matrix:
+        os: [ubuntu-latest, windows-latest]  # 开发机是 Windows，顺手验证跨平台
+        python-version: ["3.10", "3.11", "3.12"]
+    defaults:
+      run:
+        shell: bash  # Windows runner 上也走 bash，命令跨平台一致
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.10
+          python-version: ${{ matrix.python-version }}
+          cache: pip  # 依赖缓存，命中时跳过下载
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest
+          pip install flake8 pytest pytest-cov
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip check  # 依赖树完整性检查
+      - name: Syntax check (compileall)
+        run: python -m compileall -q common server gateway pytests scripts
+      - name: Import smoke test
+        run: python -c "import server.main, gateway.main"
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
@@ -25,5 +50,4 @@ jobs:
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
-        run: |
-          pytest
+        run: pytest --cov=common --cov=server --cov=gateway --cov-report=term-missing -v

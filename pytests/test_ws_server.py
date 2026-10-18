@@ -94,7 +94,6 @@ def test_ws_server():
                 request_id="req-ws-1", session_key="u1", prompt="hi", full_prompt="full"
             ).model_dump_json()
         )
-        deadline_ms = 10_000
         got = None
         for _ in range(5):
             msg = json.loads(ws.receive_text())
