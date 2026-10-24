@@ -18,9 +18,31 @@
 
 ```bash
 pip install -r requirements.txt
-playwright install chromium
 cp .env.example .env   # 然后按需修改
 ```
+
+浏览器内核（Chrome for Testing）**无需手动安装**：①启动时会检测
+`<DATA_DIR>/browser` 下是否有可用内核，缺失则自动下载官方归档（约 150MB，
+只在首次发生，之后复用）。也可提前预装：
+
+```bash
+python scripts/install_browser.py            # 下载并装配到 DATA_DIR/browser
+python scripts/install_browser.py --status   # 只看当前内核状态
+python scripts/install_browser.py --url https://mirror.example/chrome-linux64.zip  # 走镜像
+```
+
+相关配置（`BROWSER_*`，见 `.env.example`）：
+
+| 变量 | 说明 |
+|---|---|
+| `BROWSER_AUTO_DOWNLOAD` | 内核缺失时自动下载（默认 true；关闭则回退 playwright 自带内核） |
+| `BROWSER_KERNEL_VERSION` | 内核版本，默认 `152.0.7977.82` |
+| `BROWSER_KERNEL_URL` | 归档地址，留空按版本 + 平台拼官方地址；内网镜像填这里 |
+| `BROWSER_KERNEL_DIR` | 安装目录，留空用 `<DATA_DIR>/browser` |
+| `BROWSER_EXECUTABLE` | 直接指定已安装的 chrome 路径，指定后不再下载 |
+
+平台自动识别（linux64 / mac-x64 / mac-arm64 / win64）。下载或校验失败时不会
+阻断启动，会告警并回退到 playwright 自带内核（`playwright install chromium`）。
 
 ## 配置 cookies
 

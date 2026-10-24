@@ -41,6 +41,13 @@ class Settings(BaseSettings):
     cookies_file: str = ""                 # cookies JSON 文件路径（优先于内联）
     headless: bool = True
 
+    # ---- 浏览器内核（Chrome for Testing，自动下载）----
+    browser_executable: str = ""           # 显式指定 chrome 路径；非空则不再下载
+    browser_auto_download: bool = True     # 内核缺失时自动下载官方归档
+    browser_kernel_version: str = "152.0.7977.82"
+    browser_kernel_url: str = ""           # 留空则按版本+平台拼官方 URL
+    browser_kernel_dir: str = ""           # 留空则 <data_dir>/browser
+
     # ---- 会话与并发 ----
     max_contexts: int = 3
     context_idle_ttl: int = 1800

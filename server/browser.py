@@ -15,6 +15,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from .browser_kernel import ensure_browser_kernel
 from .config import SELECTORS
 
 logger = logging.getLogger("server.browser")
@@ -57,11 +58,30 @@ class BrowserEngine:
     async def start(self) -> None:
         from playwright.async_api import async_playwright  # 懒加载
 
+        # 内核装配（同步 IO，放线程）：优先 Chrome for Testing 自动下载，失败则回退
+        executable = await asyncio.to_thread(ensure_browser_kernel, self._settings)
+
         self._pw = await async_playwright().start()
-        self._browser = await self._pw.chromium.launch(
-            headless=self._settings.headless, args=_LAUNCH_ARGS
-        )
-        logger.info("Chromium 已启动（headless=%s）", self._settings.headless)
+        kwargs: dict = {"headless": self._settings.headless, "args": _LAUNCH_ARGS}
+        if executable:
+            kwargs["executable_path"] = executable
+        try:
+            self._browser = await self._pw.chromium.launch(**kwargs)
+            logger.info(
+                "Chromium 已启动（headless=%s, 内核=%s）",
+                self._settings.headless, executable or "playwright 自带",
+            )
+        except Exception as exc:  # noqa: BLE001
+            if not executable:
+                raise RuntimeError(
+                    "浏览器启动失败。请执行 python scripts/install_browser.py "
+                    "下载内核，或运行 playwright install chromium"
+                ) from exc
+            logger.warning("指定内核启动失败，回退 playwright 自带 chromium: %s", exc)
+            self._browser = await self._pw.chromium.launch(
+                headless=self._settings.headless, args=_LAUNCH_ARGS
+            )
+            logger.info("已回退至 playwright 自带 chromium")
 
     async def stop(self) -> None:
         try:
